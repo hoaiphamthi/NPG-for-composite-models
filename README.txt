@@ -18,7 +18,7 @@ This is the instruction file for the code of paper "COMPOSITE OPTIMIZATION MODEL
 
 - To produce the results in the paper you just simply run the code without any changes, we've already pre-set up the size and the random seed that we use for our paper.
 
-- For picture references, the detailed sizes and random seeds for each problem presented in paper are provided here:
+- For the figures illustrated in the paper, the detailed sizes and random seeds for each problem presented in paper are provided here:
     Dual max entropy problem    : m = 4000, n = 5000, seed = 4
     Lasso                       : m = 2048, n = 8096, seed = 2
     Min length curve problem    : m = 2000, n = 10000, seed = 1
