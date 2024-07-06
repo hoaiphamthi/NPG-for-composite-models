@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 import openpyxl
 
 def save(data, name_instance,name, saving_obj):
@@ -105,7 +105,13 @@ def plot_res(results, key, name_instance,name ,over_time = False, with_fopt = Tr
     plt.close()
 
 def create_report(results, name, position, parameters , name_workbook, with_fopt = True, avg_ite = None):
-    workbook = load_workbook(name_workbook)
+    if os.path.exists(name_workbook):
+        workbook = load_workbook(name_workbook)
+    else:
+        workbook = Workbook()
+        for sheet_name in workbook.sheetnames:
+            sheet = workbook[sheet_name]
+            workbook.remove(sheet)
     if name in workbook.sheetnames:
         worksheet = workbook[name]
     else:

@@ -1,19 +1,21 @@
-import lasso, NMF, min_length_curve, dual_max_entropy, maximum_likelyhood
+import lasso, NMF, min_length_curve, dual_max_entropy, maximum_likelyhood, low_rank_matrix_completion, QP_NSL
 from save_and_plot import create_report, format_latex
 from openpyxl import load_workbook
 import numpy as np
+import os
 
 
 name_workbook = 'Results_NPG.xlsx'
 
 def clear_report_content(sheet):
-    workbook = load_workbook(name_workbook)
-    if sheet in workbook.sheetnames:
-        worksheet = workbook[sheet]
-        for row in worksheet.iter_rows():
-            for cell in row:
-                cell.value = None
-    workbook.save(name_workbook)
+    if os.path.exists(name_workbook):
+        workbook = load_workbook(name_workbook)
+        if sheet in workbook.sheetnames:
+            worksheet = workbook[sheet]
+            for row in worksheet.iter_rows():
+                for cell in row:
+                    cell.value = None
+        workbook.save(name_workbook)
 
 def find_min_value(results):
     f_min = np.inf
@@ -129,7 +131,7 @@ def experiment_dual_max_entropy():
 def experiment_maximum_likelyhood():
     clear_report_content("maximum_likelyhood")
     seeds = [1,2,3,4,5,6,7,8,9,10]
-    size = [(100, 0.1, 10, 50), (100, 0.1, 10, 500), (100, 0.1, 10, 1000), (30, 0.1, 1000, 50), (50, 0.1, 1000, 100)]
+    size = [(100, 0.1, 10, 50), (100, 0.1, 10, 500), (100, 0.1, 10, 1000),  (50, 0.1, 1000, 100), (20, 0.1, 1000, 30)]
     all_results = {}
     row, col = 1,1
     for seed in seeds:
@@ -144,7 +146,7 @@ def experiment_maximum_likelyhood():
 
 
 def main():
-    experiment_maximum_likelyhood()
+    experiment_lasso()
 
 
 
