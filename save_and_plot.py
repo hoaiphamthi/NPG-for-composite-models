@@ -72,7 +72,7 @@ def plot_res(results, key, name_instance,name ,over_time = False, with_fopt = Tr
     else:
         opt = 0.0
     i = 0
-    numerical_stabalizer = 0 #10**-16
+    numerical_stabalizer = 0 
     for k, history_values in results.items():
         N = len(history_values[key])
         values = np.array(history_values[key]) - opt + numerical_stabalizer

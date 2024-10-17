@@ -1,13 +1,13 @@
 import numpy as np
 from save_and_plot import save, load, make_all_plots
-from alg import AdProxGrad, ProxGrad, NPG, NPG_quad
+from alg import AdProxGrad, ProxGrad, NPG, NPG_quad, AdaPG
 import matplotlib.pyplot as plt
 ######################################################
 LOAD_DATA = False
 SAVE_DATA = True
 LOAD_RESULTS = False
 SAVE_RESULTS = True
-PLOT = True
+PLOT = False
 ######################################################
 
 seed = 2
@@ -58,7 +58,7 @@ def run_lasso(m = m, n = n, seed = seed):
 
 
     def Run(algo, params = None, version = 2):
-        return algo(oracle_f, g, prox_g, x0, maxit = N, tol = tol, stop = "res", lns_init = True, verbose = True, 
+        return algo(oracle_f, g, prox_g, x0, maxit = N, tol = tol, stop = "res", lns_init = True, verbose = False, 
                                 ver = version, track = ["res", "obj", "grad", "steps","time", "mse"], fixed_step = 0.001,tuning_params= params, xopt = xopt)
 
     def compare_signals(xopt, x):
@@ -82,30 +82,33 @@ def run_lasso(m = m, n = n, seed = seed):
         x1, history1 = Run(AdProxGrad)
         results["AdPG"] = history1
         
+        x2, history2 = Run(AdaPG, params=[3/2, 3/4])
+        results["AdaPG" + str([3/2, 3/4])] = history2
+
         for param in [[1.1, 0.5], [1.2, 0.5]]:
-            x2, history2 = Run(ProxGrad, param)
-            results["PG-LS" + str(param)] = history2
+            x3, history3 = Run(ProxGrad, param)
+            results["PG-LS" + str(param)] = history3
 
         # In the cases where there're more than 1 set of parameters to tune, 
         # you need to add "+str(param)" to the name of algs in the dictionary results otherwise all results would not be saved correctly.
-
+        
         for param in [[0.1, 5.7, 0.7, 0.69]]:
-            x3, history3 = Run(NPG, param, version=1)
-            results["NPG1"] = history3
+            x4, history4 = Run(NPG, param, version=1)
+            results["NPG1"] = history4
 
         for param in [[0.1, 5.7, 0.99, 0.98]]:
-            x4, history4 = Run(NPG, param, version=2)
-            results["NPG2"] = history4
+            x5, history5 = Run(NPG, param, version=2)
+            results["NPG2"] = history5
 
         for param in [[0.1, 5.7, 0.99, 0.98]]:
-            x5, history5 = Run(NPG_quad, param)
-            results["NPG_quad"] = history5
+            x6, history6 = Run(NPG_quad, param)
+            results["NPG_quad"] = history6
 
     if SAVE_RESULTS and LOAD_RESULTS == False:
         save(results,name_instance,name, saving_obj=2)
 
     make_all_plots(results, name_instance, name, plot_mse=True, plot=PLOT)
-    if PLOT and not LOAD_RESULTS: compare_signals(xopt, x4)
+    if PLOT and not LOAD_RESULTS: compare_signals(xopt, x5)
     parameters = {"additional_info":f"lambda = {lamda:.2f}" , "size":f"({m}, {n})", "seed": seed}
     return results, name_instance, name, parameters 
 

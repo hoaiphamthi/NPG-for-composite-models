@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.linalg import slogdet, inv
 from save_and_plot import  make_all_plots, load, save
-from alg import AdProxGrad, ProxGrad, NPG
+from alg import AdProxGrad, ProxGrad, NPG, AdaPG
 from scipy.linalg import eigh
 # Control section
 # - If data is not loaded then it will be created.
@@ -11,7 +11,7 @@ LOAD_DATA = False
 SAVE_DATA = True
 LOAD_RESULTS = False
 SAVE_RESULTS = True
-PLOT = True
+PLOT = False
 ######################################################
 
 seed = 6
@@ -64,7 +64,7 @@ def run_maximum_likelyhood(n = n, lb = lb, ub = ub, M = M, seed = seed, N = N):
         return U @ ((la_ * U).T)
 
     def Run(algo, params = None, version = 2):
-        return algo(oracle_f, g, prox_g, X0, maxit = N, tol = tol, stop = "res", lns_init = False, verbose = True, 
+        return algo(oracle_f, g, prox_g, X0, maxit = N, tol = tol, stop = "res", lns_init = False, verbose = False, 
                                 ver = version, track = ["res", "obj", "grad", "steps","time"], fixed_step = 0.001,tuning_params= params)
 
     results = {}
@@ -76,20 +76,24 @@ def run_maximum_likelyhood(n = n, lb = lb, ub = ub, M = M, seed = seed, N = N):
         x1, history1 = Run(AdProxGrad)
         results["AdPG"] = history1
         
+        x2, history2 = Run(AdaPG, params=[3/2, 3/4])
+        results["AdaPG" + str([3/2, 3/4])] = history2
+
         for param in [[1.1, 0.5], [1.2, 0.5]]:
-            x2, history2 = Run(ProxGrad, param)
-            results["PG-LS" + str(param)] = history2
+            x3, history3 = Run(ProxGrad, param)
+            results["PG-LS" + str(param)] = history3
 
         # In the cases where there're more than 1 set of parameters to tune, 
         # you need to add "+str(param)" to the name of algs in the dictionary results otherwise all results would not be saved correctly.
-
+        
         for param in [[0.1, 5.7, 0.7, 0.69]]:
-            x3, history3 = Run(NPG, param, version=1)
-            results["NPG1"] = history3
+            x4, history4 = Run(NPG, param, version=1)
+            results["NPG1"] = history4
 
         for param in [[0.1, 5.7, 0.99, 0.98]]:
-            x4, history4 = Run(NPG, param, version=2)
-            results["NPG2"] = history4
+            x5, history5 = Run(NPG, param, version=2)
+            results["NPG2"] = history5
+
 
     if SAVE_RESULTS and LOAD_RESULTS == False:
         save(results,name_instance,name, saving_obj=2)

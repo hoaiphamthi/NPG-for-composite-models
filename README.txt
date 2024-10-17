@@ -20,7 +20,7 @@ This is the instruction file for the code of paper "COMPOSITE OPTIMIZATION MODEL
 
 - For the figures illustrated in the paper, the detailed sizes and random seeds for each problem presented in paper are provided here:
     Dual max entropy problem    : m = 4000, n = 5000, seed = 4
-    Lasso                       : m = 2048, n = 8096, seed = 2
+    Lasso                       : m = 2048, n = 8192, seed = 2
     Min length curve problem    : m = 2000, n = 10000, seed = 1
     NMF problem                 : m = 3000, n = 3000, r = 30, seed = 1
     Maximum likelyhood problem  : n = 100, lb = 0.1, ub = 10, M = 50, seed = 6

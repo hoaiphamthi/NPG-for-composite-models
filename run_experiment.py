@@ -1,5 +1,5 @@
 import lasso, NMF, min_length_curve, dual_max_entropy, maximum_likelyhood
-from save_and_plot import create_report
+from save_and_plot import create_report, format_latex
 from openpyxl import load_workbook
 import numpy as np
 import os
@@ -58,7 +58,7 @@ def prepare_report(size, row, col, seed, seeds, results, name_instance, name, pa
         parameters["seed"] = "Average of all dataset."
         parameters["additional_info"] = ""
         create_report(avg_results, name, (row + len(results)+4, col), parameters, name_workbook, with_fopt=False, avg_ite=avg_iteration)
-        
+
 def experiment_lasso():
     clear_report_content("lasso")
     seeds = [1,2,3,4,5,6,7,8,9,10]
@@ -128,7 +128,7 @@ def experiment_dual_max_entropy():
 def experiment_maximum_likelyhood():
     clear_report_content("maximum_likelyhood")
     seeds = [1,2,3,4,5,6,7,8,9,10]
-    size = [(100, 0.1, 10, 50), (100, 0.1, 10, 500), (100, 0.1, 10, 1000),  (50, 0.1, 1000, 100), (20, 0.1, 1000, 30)]
+    size = [(100, 0.1, 10, 50), (100, 0.1, 10, 500), (100, 0.1, 10, 1000),(30, 0.1, 1000, 50), (50, 0.1, 1000, 100)]
     all_results = {}
     row, col = 1,1
     for seed in seeds:
@@ -143,7 +143,7 @@ def experiment_maximum_likelyhood():
 
 
 def main():
-    experiment_lasso()
+    experiment_nmf()
     
 
 

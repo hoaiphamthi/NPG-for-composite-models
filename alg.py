@@ -106,6 +106,60 @@ def AdProxGrad(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_in
             print(f"The AdPG algorithm terminated without reaching required accuracy")
     return x, history_dic
 
+def AdaPG(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init=True, verbose=False, ver=2, track=["res", "obj", "grad", "steps","time"], fixed_step=1e-2,tuning_params =None, xopt = 0):
+    def obj(fx, x):
+        return fx + g(x)
+    start = time.perf_counter()
+    
+    x_prev = x0
+    theta = 1.0
+    
+    if lns_init:
+        alpha_prev, x, grad_prev, grad_fx, f_prev, fx, lns_iter = linesearch_initial(oracle_f, g, prox_g, x0, fixed_step, veryLargeSize=0.9)
+        if verbose:
+            print(f"Linesearch found initial stepsize {alpha_prev} in {lns_iter} iterations")
+    else:
+        alpha_prev = fixed_step
+        if verbose:
+            print("No linesearch, initial stepsize is ", alpha_prev)
+        f_prev, grad_prev = oracle_f(x_prev)
+        x = prox_g(x_prev - alpha_prev * grad_prev, alpha_prev)
+        fx, grad_fx = oracle_f(x)
+    dict_values = {
+        "res": [ np.linalg.norm(x - x_prev)], 
+        "obj": [ obj(fx, x)],
+        "grad": [np.linalg.norm(grad_fx)],
+        "steps": [ alpha_prev],
+        "time":[0],
+        "mse":[mse(x, xopt)]
+    }
+    history_dic = {key: [] for key in track}
+    history_dic = {k: v for k, v in dict_values.items() if k in track}
+    q = tuning_params[0]
+    r = tuning_params[1]
+    for i in range(1, maxit):
+        L = np.linalg.norm(grad_fx - grad_prev) / np.linalg.norm(x - x_prev)
+        l = np.sum( (grad_fx - grad_prev)*(x - x_prev) )  / np.linalg.norm(x - x_prev)**2
+        alpha = alpha_prev * min(np.sqrt(1/q + theta), np.sqrt(1- r/q) / np.sqrt(max(alpha_prev**2 * L**2 + 2*alpha_prev*l*(r-1) - (2*r-1), 0) ))
+
+        theta = alpha / alpha_prev
+        x_prev, grad_prev, alpha_prev = x, grad_fx, alpha
+        x = prox_g(x - alpha * grad_fx, alpha)
+        end = time.perf_counter()
+
+        residual = np.linalg.norm(x_prev - x) 
+        fx, grad_fx = oracle_f(x)
+        current_info = {"res": residual, "obj": obj(fx, x), "grad": np.linalg.norm(grad_fx), "steps": alpha,"time":end-start, "mse":mse(x, xopt)}
+        history_dic = collect_history(history_dic, current_info)
+        if current_info[stop] <= tol:
+            if verbose:
+                print(f"The AdaPG{tuning_params} algorithm reached required accuracy in {i+1} iterations")
+            break
+    if current_info[stop] > tol:
+        if verbose:
+            print(f"The AdaPG{tuning_params} algorithm terminated without reaching required accuracy")
+    return x, history_dic
+
 def NPG(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init=True, verbose=False, ver=2, track=["res", "obj", "grad", "steps","time"], fixed_step=1e-2, tuning_params = [0.9,5,0.5,0.3], xopt = 0):
     def obj(fx, x):
         return fx + g(x)
