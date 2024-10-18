@@ -11,7 +11,7 @@ LOAD_DATA = False
 SAVE_DATA = True
 LOAD_RESULTS = False
 SAVE_RESULTS = True
-PLOT = False
+PLOT = True
 ######################################################
 
 seed = 6
@@ -64,7 +64,7 @@ def run_maximum_likelyhood(n = n, lb = lb, ub = ub, M = M, seed = seed, N = N):
         return U @ ((la_ * U).T)
 
     def Run(algo, params = None, version = 2):
-        return algo(oracle_f, g, prox_g, X0, maxit = N, tol = tol, stop = "res", lns_init = False, verbose = False, 
+        return algo(oracle_f, g, prox_g, X0, maxit = N, tol = tol, stop = "res", lns_init = False, verbose = True, 
                                 ver = version, track = ["res", "obj", "grad", "steps","time"], fixed_step = 0.001,tuning_params= params)
 
     results = {}

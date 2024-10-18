@@ -7,7 +7,7 @@ LOAD_DATA = False
 SAVE_DATA = True
 LOAD_RESULTS = False
 SAVE_RESULTS = True
-PLOT = False
+PLOT = True
 ######################################################
 
 seed = 2
@@ -58,7 +58,7 @@ def run_lasso(m = m, n = n, seed = seed):
 
 
     def Run(algo, params = None, version = 2):
-        return algo(oracle_f, g, prox_g, x0, maxit = N, tol = tol, stop = "res", lns_init = True, verbose = False, 
+        return algo(oracle_f, g, prox_g, x0, maxit = N, tol = tol, stop = "res", lns_init = True, verbose = True, 
                                 ver = version, track = ["res", "obj", "grad", "steps","time", "mse"], fixed_step = 0.001,tuning_params= params, xopt = xopt)
 
     def compare_signals(xopt, x):

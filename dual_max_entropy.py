@@ -11,7 +11,7 @@ LOAD_DATA = False
 SAVE_DATA = True
 LOAD_RESULTS = False
 SAVE_RESULTS = True
-PLOT = False
+PLOT = True
 ######################################################
 
 seed = 4
@@ -66,7 +66,7 @@ def run_dual_max_entropy(m = m, n = n, seed = seed):
         return y
 
     def Run(algo, params = None, version = 2):
-        return algo(oracle_f, g, prox_g, y0, maxit = N, tol = tol, stop = "res", lns_init = False, verbose = False, 
+        return algo(oracle_f, g, prox_g, y0, maxit = N, tol = tol, stop = "res", lns_init = False, verbose = True, 
                                 ver = version, track = ["res", "obj", "grad", "steps","time"], fixed_step = 0.001,tuning_params= params)
 
 
