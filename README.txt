@@ -1,4 +1,4 @@
-This is the instruction file for the code of paper "COMPOSITE OPTIMIZATION MODELS VIA PROXIMAL GRADIENT METHOD WITH ENHANCED ADAPTIVE STEPSIZES" by Pham Thi Hoai and Nguyen Pham Duy Thai
+This is the instruction file for the code of paper "COMPOSITE OPTIMIZATION MODELS VIA PROXIMAL GRADIENT METHOD WITH A NOVEL ENHANCED ADAPTIVE STEPSIZE" by Pham Thi Hoai and Nguyen Pham Duy Thai
 
 - There're five python files named by corresponding tested instances. 
 - The "run_experiment.py" file is designed to run many problems, sizes, random datasets all at once.
