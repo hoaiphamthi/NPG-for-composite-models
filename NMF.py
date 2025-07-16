@@ -8,17 +8,17 @@ from alg import AdProxGrad, ProxGrad, NPG, AdaPG
 # - If results is not loaded then the algorithms will run.
 ######################################################
 LOAD_DATA = False
-SAVE_DATA = True
-LOAD_RESULTS = False
+SAVE_DATA = False
+LOAD_RESULTS = True
 SAVE_RESULTS = True
-PLOT = True
+PLOT = False
 ######################################################
 
-seed = 1
-m, r, n = 3000, 30, 3000
+seed = 2
+m, r, n = 500, 20, 1000
+N = 2000
 
-
-def run_nmf(m = m, r = r, n = n, seed = seed):
+def run_nmf(m = m, r = r, n = n, seed = seed, N = N ):
     def f(X):
         U, V = X[:m], X[m:]
         return 0.5 * np.linalg.norm(np.dot(U, V.T) - A)**2
@@ -41,7 +41,6 @@ def run_nmf(m = m, r = r, n = n, seed = seed):
     name = "nonnegative_matrix_factorization"
     name_instance = f"nmf_m={m}_n={n}_r={r}_seed={seed}"
     tol = 1e-6
-    N = 5000
 
     if LOAD_DATA:
         loaded_data = load(name_instance, name, saving_obj=1)
@@ -58,11 +57,9 @@ def run_nmf(m = m, r = r, n = n, seed = seed):
         data = {"A":A, "x0":x0}
         save(data, name_instance, name,saving_obj=1)
 
-
-    def Run(algo, params = None, version = 2):
-        return algo(oracle_f, g, prox_g, x0, maxit = N, tol = tol, stop = "res", lns_init = True, verbose = True, 
-                                ver = version, track = ["res", "obj", "grad", "steps","time"], fixed_step = 0.001,tuning_params= params)
-
+    def Run(algo, **kwargs):
+        return algo(oracle_f, g, prox_g, x0, maxit = N, tol = tol, stop = "res", lns_init = True, verbose = False, 
+                                 fixed_step = 0.001, **kwargs)
 
     results = {}
     if LOAD_RESULTS:
@@ -71,26 +68,21 @@ def run_nmf(m = m, r = r, n = n, seed = seed):
             results[key] = history
     else:          
 
-        x1, history1 = Run(AdProxGrad)
-        results["AdPG"] = history1
+        x1, history1 = Run(NPG, params = [0.1, 5.7, 0.7, 0.69], ver=1)
+        results["NPG1"] = history1
+
+        x2, history2 = Run(NPG, params = [0.1, 5.7, 0.99, 0.98], ver=2)
+        results["NPG2"] = history2
+  
+        x3, history3 = Run(AdProxGrad)
+        results["AdPG"] = history3
         
-        x2, history2 = Run(AdaPG, params=[3/2, 3/4])
-        results["AdaPG" + str([3/2, 3/4])] = history2
+        x4, history4 = Run(AdaPG, params=[3/2, 3/4])
+        results["AdaPG" + str([3/2, 3/4])] = history4
 
         for param in [[1.1, 0.5], [1.2, 0.5]]:
-            x3, history3 = Run(ProxGrad, param)
-            results["PG-LS" + str(param)] = history3
-
-        # In the cases where there're more than 1 set of parameters to tune, 
-        # you need to add "+str(param)" to the name of algs in the dictionary results otherwise all results would not be saved correctly.
-        
-        for param in [[0.1, 5.7, 0.7, 0.69]]:
-            x4, history4 = Run(NPG, param, version=1)
-            results["NPG1"] = history4
-
-        for param in [[0.1, 5.7, 0.99, 0.98]]:
-            x5, history5 = Run(NPG, param, version=2)
-            results["NPG2"] = history5
+            x5, history5 = Run(ProxGrad, params = param)
+            results["PG-LS" + str(param)] = history5
 
     if SAVE_RESULTS and LOAD_RESULTS == False:
         save(results,name_instance,name, saving_obj=2)

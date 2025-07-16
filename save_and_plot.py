@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import os
 from openpyxl import load_workbook, Workbook
 import openpyxl
+import seaborn as sns
+import matplotlib.patches as mpatches
 
 def save(data, name_instance,name, saving_obj):
     if saving_obj == 1:
@@ -36,6 +38,7 @@ def make_all_plots(results, name_instance,name,save = True, plot_mse = False, pl
     plot_res(results, "obj", name_instance,name,save = save, plot=plot)
     plot_res(results, "obj", name_instance, name ,save = save,over_time=True, plot=plot)
     plot_res(results, "steps", name_instance, name,save = save, plot=plot)
+    boxplot(results, name_instance, name,save = save, plot=plot)
     if plot_mse == True:
         plot_res(results, "mse", name_instance, name,save = save, plot=plot)
 
@@ -46,19 +49,46 @@ def find_min_value(results):
         f_min = min(f_min, min(history_values["obj"]))
     return f_min
 
+def assign_color(alg_names):
+    color_map = {
+    'red': [ "#fc8d59", '#d73027', "#92580b"],    # For 'NPG' group #fc8d59
+    'green': ["#5dc404", "#045D2C", "#09EE70ED", "#022211EC"],             # For 'LS' group
+    'blue': ["#6d36ab", '#2171b5']                # AdPG group
+}
+    assigned_colors = []
+
+    # Track usage index for each group
+    color_index = {'red': 0, 'green': 0, 'blue': 0}
+
+    for name in alg_names:
+        if 'NPG' in name:
+            group = 'red'
+        elif 'LS' in name:
+            group = 'green'
+        else:
+            group = 'blue'
+        
+        # Pick next color in group's list (cycle if needed)
+        group_colors = color_map[group]
+        index = color_index[group] % len(group_colors)
+        assigned_colors.append(group_colors[index])
+        color_index[group] += 1
+    return assigned_colors
+
 def plot_res(results, key, name_instance,name ,over_time = False, with_fopt = True, save = True, plot = True):
+    sns.set(style="whitegrid", context="paper")
     plt.figure()
     name_image = name_instance + "_"+ key
-    fontsize = 16
+    fontsize = 14
     if over_time == True: 
         name_image += "_over_time"
-        plt.xlabel('Running time(s)', fontsize=fontsize)
+        plt.xlabel('Time(s)', fontsize=fontsize)
     else:
         plt.xlabel('Iterations', fontsize=fontsize)
     if key == "obj":
-        plt.ylabel("Objective", fontsize=fontsize)
+        plt.ylabel('Objective', fontsize=fontsize)
     elif key == "res":
-        plt.ylabel("Residual", fontsize=fontsize)
+        plt.ylabel('Residual', fontsize=fontsize)
     elif key == "grad":
         plt.ylabel("Norm of gradient", fontsize=fontsize)
     elif key == "steps":
@@ -73,7 +103,9 @@ def plot_res(results, key, name_instance,name ,over_time = False, with_fopt = Tr
         opt = 0.0
     i = 0
     numerical_stabalizer = 0 
-    for k, history_values in results.items():
+    algs = results.keys()
+    colors = assign_color(algs)
+    for alg, history_values in results.items():
         N = len(history_values[key])
         values = np.array(history_values[key]) - opt + numerical_stabalizer
         if with_fopt: 
@@ -86,20 +118,57 @@ def plot_res(results, key, name_instance,name ,over_time = False, with_fopt = Tr
             if len(set(time_axis)) != len(time_axis):
                 print("Couldn't plot objective over time due to too small time step.")
                 return None
-            plt.plot(time_axis, printed_values, label = k, marker = markers[i % 10], markevery = int(N / 10) +1  ) 
+            plt.plot(time_axis, printed_values, label = alg, marker = markers[i % 10], markevery = int(N / 10) +1, color = colors[i], linewidth=1.5 ) 
         else:
-            plt.plot(printed_values, label=k, marker = markers[i % 10], markevery = int(N / 10)+1 )
+            plt.plot(printed_values, label=alg, marker = markers[i % 10], markevery = int(N / 10)+1, color = colors[i], linewidth=1.5 )
         i += 1
-    plt.grid(True)
+    #plt.grid(True)
     plt.yscale("log")
     #plt.title(name_instance)
     plt.legend()
-
+    plt.tight_layout()
     if save:
         folder_path = os.path.join("plots", name, name_instance)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-        plt.savefig(os.path.join(folder_path, name_image))
+        plt.savefig(os.path.join(folder_path, name_image), dpi=300)
+    if plot:
+        plt.show()
+    plt.close()
+
+def boxplot(results, name_instance, name , save = True, plot = True):
+    name_image = name_instance + "_" + 'stepsize_boxplot'
+    fontsize = 14
+    name_image += ".pdf"
+    
+    data_values = list( d['steps'] for d in results.values())
+    labels = list(results.keys())
+    colors = assign_color(labels)  # Customize colors here
+
+    # Create box plot
+    sns.set(style="whitegrid", context="paper")
+    fig, ax = plt.subplots()
+    box = ax.boxplot(data_values, patch_artist=True, showfliers=False, medianprops=dict(color='black', linewidth=1.5))  # patch_artist=True enables fill color
+
+    # Set colors
+    for patch, color in zip(box['boxes'], colors):
+        patch.set_facecolor(color)
+
+    # Customize plot
+    #ax.set_xticks(range(1, len(labels) + 1))
+    #ax.set_xticklabels(labels, fontsize = fontsize - 3)
+    ax.set_xticks([])
+    ax.set_ylabel('Stepsize', fontsize = fontsize)
+    ax.set_xlabel('Algorithms', fontsize = fontsize)
+    plt.tight_layout()
+    handles = [mpatches.Patch(color=c, label=l) for c, l in zip(colors, labels)]
+    ax.legend(handles=handles, loc='upper right', fontsize=fontsize - 4)
+    #ax.legend(handles=handles, loc='center left', bbox_to_anchor=(1.02, 0.5), fontsize=9)
+    if save:
+        folder_path = os.path.join("plots", name, name_instance)
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        plt.savefig(os.path.join(folder_path, name_image), dpi=300)
     if plot:
         plt.show()
     plt.close()

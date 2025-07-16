@@ -8,18 +8,18 @@ from scipy.linalg import eigh
 # - If results is not loaded then the algorithms will run.
 ######################################################
 LOAD_DATA = False
-SAVE_DATA = True
+SAVE_DATA = False
 LOAD_RESULTS = False
 SAVE_RESULTS = True
-PLOT = True
+PLOT = False
 ######################################################
 
 seed = 6
-n = 100
+n = 30
 lb = 1e-1
-ub = 10
+ub = 1000
 M = 50
-N = 20000
+N = 10000
 
 def run_maximum_likelyhood(n = n, lb = lb, ub = ub, M = M, seed = seed, N = N):
     name = "maximum_likelyhood"
@@ -63,9 +63,9 @@ def run_maximum_likelyhood(n = n, lb = lb, ub = ub, M = M, seed = seed, N = N):
         la_ = np.clip(la, lb, ub)
         return U @ ((la_ * U).T)
 
-    def Run(algo, params = None, version = 2):
-        return algo(oracle_f, g, prox_g, X0, maxit = N, tol = tol, stop = "res", lns_init = False, verbose = True, 
-                                ver = version, track = ["res", "obj", "grad", "steps","time"], fixed_step = 0.001,tuning_params= params)
+    def Run(algo, **kwargs):
+        return algo(oracle_f, g, prox_g, X0, maxit = N, tol = tol, stop = "res", lns_init = False, verbose = False, 
+                                 fixed_step = 0.001, **kwargs)
 
     results = {}
     if LOAD_RESULTS:
@@ -73,26 +73,21 @@ def run_maximum_likelyhood(n = n, lb = lb, ub = ub, M = M, seed = seed, N = N):
         for key, history in loaded_results.items():
             results[key] = history
     else:          
-        x1, history1 = Run(AdProxGrad)
-        results["AdPG"] = history1
+        x1, history1 = Run(NPG, params = [0.1, 5.7, 0.7, 0.69], ver=1)
+        results["NPG1"] = history1
+
+        x2, history2 = Run(NPG, params = [0.1, 5.7, 0.99, 0.98], ver=2)
+        results["NPG2"] = history2
+  
+        x3, history3 = Run(AdProxGrad)
+        results["AdPG"] = history3
         
-        x2, history2 = Run(AdaPG, params=[3/2, 3/4])
-        results["AdaPG" + str([3/2, 3/4])] = history2
+        x4, history4 = Run(AdaPG, params=[3/2, 3/4])
+        results["AdaPG" + str([3/2, 3/4])] = history4
 
         for param in [[1.1, 0.5], [1.2, 0.5]]:
-            x3, history3 = Run(ProxGrad, param)
-            results["PG-LS" + str(param)] = history3
-
-        # In the cases where there're more than 1 set of parameters to tune, 
-        # you need to add "+str(param)" to the name of algs in the dictionary results otherwise all results would not be saved correctly.
-        
-        for param in [[0.1, 5.7, 0.7, 0.69]]:
-            x4, history4 = Run(NPG, param, version=1)
-            results["NPG1"] = history4
-
-        for param in [[0.1, 5.7, 0.99, 0.98]]:
-            x5, history5 = Run(NPG, param, version=2)
-            results["NPG2"] = history5
+            x5, history5 = Run(ProxGrad, params = param)
+            results["PG-LS" + str(param)] = history5
 
 
     if SAVE_RESULTS and LOAD_RESULTS == False:
