@@ -8,17 +8,21 @@ from alg import AdProxGrad, ProxGrad, NPG, AdaPG
 ######################################################
 LOAD_DATA = False
 SAVE_DATA = False
-LOAD_RESULTS = False
+LOAD_RESULTS = True
 SAVE_RESULTS = True
 PLOT = False
 ######################################################
 
 seed = 1
-m, n = 500,5000
+m, n = 100,10000
 N = 50000
 
 
 def run_min_len_curve(m = m, n = n, seed = seed, N = N):
+
+    # ============================================================
+    # Define objective, gradient and proximal operator
+    # ============================================================
     def f(x):
         return np.sqrt(1 + x[0]**2) + np.sum(np.sqrt(1 + (x[1:] - x[:-1])**2))
 
@@ -34,6 +38,7 @@ def run_min_len_curve(m = m, n = n, seed = seed, N = N):
 
     def prox_g(x, alpha):
         return x - A.T.dot(P.dot(A.dot(x) - b))
+    
 
     name = "min_len_curve"
     np.random.seed(seed)
@@ -57,6 +62,8 @@ def run_min_len_curve(m = m, n = n, seed = seed, N = N):
     if SAVE_DATA:
         data = {"A":A, "b":b, "x0":x0,"P":P,"x_feas":x_feas}
         save(data, name_instance, name,saving_obj=1)
+
+    
 
     def Run(algo, **kwargs):
         return algo(oracle_f, g, prox_g, x0, maxit = N, tol = tol, stop = "res", lns_init = True, verbose = False, 

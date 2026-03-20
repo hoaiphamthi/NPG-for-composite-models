@@ -44,34 +44,6 @@ def linesearch(oracle_f, g, prox_g, x, fx, grad_fx, t, inc=1.2, dcr=0.5):
             t *= dcr
     return x, fx, grad_fx, t
 
-def explicit_linesearch1(oracle_f,g, prox_g, x, fx, grad_fx, t = 1, inc=1.2, dcr=0.5):
-    t *= inc
-    t = 0.1
-    delta = 0.45
-    for i in range(1, 1001):
-        x1 = prox_g(x - t * grad_fx, t)
-        fx1, grad_fx1 = oracle_f(x1)
-        if np.linalg.norm(grad_fx1 - grad_fx) / np.linalg.norm(x1 - x) <= delta / t:
-            x, fx, grad_fx = x1, fx1, grad_fx1
-            break
-        else:
-            t *= dcr
-    return x, fx, grad_fx, t,
-
-def explicit_linesearch2(oracle_f,g, prox_g, x, fx, grad_fx, t = 1, inc=1.2, dcr=0.5):
-    t *= inc
-    t = 1
-    y = prox_g(x - 1 * grad_fx, 1)
-    fix_term = g(y) - g(x) + np.dot(grad_fx, y - x) + (1/2)* np.linalg.norm(y-x)**2
-    for i in range(1, 1001):
-        x1 = x + t * (y - x)
-        fx1, grad_fx1 = oracle_f(x1)
-        if fx1 <= fx + t * fix_term:
-            x, fx, grad_fx = x1, fx1, grad_fx1
-            break
-        else:
-            t *= dcr
-    return x, fx, grad_fx, t,
 
 def collect_history(history_dic, data_dic):
     for key in history_dic.keys():
@@ -105,7 +77,6 @@ def AdProxGrad(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_in
         "time":[0],
         "mse":[mse(x, xopt)]
     }
-    history_dic = {key: [] for key in track}
     history_dic = {k: v for k, v in dict_values.items() if k in track}
     for i in range(1, maxit):
         if ver == 1:
@@ -161,7 +132,6 @@ def AdaPG(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init=Tr
         "time":[0],
         "mse":[mse(x, xopt)]
     }
-    history_dic = {key: [] for key in track}
     history_dic = {k: v for k, v in dict_values.items() if k in track}
     q = params[0]
     r = params[1]
@@ -188,13 +158,13 @@ def AdaPG(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init=Tr
             print(f"The AdaPG{params} algorithm terminated without reaching required accuracy")
     return x, history_dic
 
-def NPG(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init=True, verbose=False, track=["res", "obj", "grad", "steps","time"], fixed_step=1e-2, params = [0.1, 5.7, 0.7, 0.69], xopt = 0, ver=2):
+def NPG(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init=True, verbose=False, track=["res", "obj", "grad", "steps","time"], fixed_step=1e-2, params = [0.1, 5.7, 0.7, 0.69], xopt = 0, ver=2, e = 1.1):
     def obj(fx, x):
         return fx + g(x)
     def gamma_sequence(k):
         a = params[0]
         b = params[1]
-        return (a * np.log(k+1)**b ) / (k+1)**1.1
+        return (a * np.log(k+1)**b ) / (k+1)**e
     
     start = time.perf_counter()
     c0 = params[2]
@@ -202,7 +172,7 @@ def NPG(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init=True
     x_prev = x0
 
     if lns_init  :
-        t_prev, x, grad_prev, grad_fx, f_prev, fx, lns_iter = linesearch_initial(oracle_f, g, prox_g, x0, fixed_step, veryLargeSize=10) # try veryLargeSize = 10 if bad experiment results come
+        t_prev, x, grad_prev, grad_fx, f_prev, fx, lns_iter = linesearch_initial(oracle_f, g, prox_g, x0, fixed_step, veryLargeSize=0.9) # try veryLargeSize = 10 if bad experiment results come
         t_prev_prev = t_prev
         if verbose:
             print(f"Linesearch found initial stepsize {t_prev} in {lns_iter} iterations")
@@ -221,7 +191,6 @@ def NPG(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init=True
         "time":[0],
         "mse":[mse(x, xopt)]
     }
-    history_dic = {key: [] for key in track}
     history_dic = {k: v for k, v in dict_values.items() if k in track}
 
     for i in range(1, maxit):
@@ -233,14 +202,12 @@ def NPG(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init=True
             if t_prev / t_prev_prev < 1:
                 gamma_prime  = np.min([gamma_prime, np.sqrt(1 + t_prev / t_prev_prev)-1])
             t = (1 + gamma_prime) * t_prev
-
         x_prev, grad_prev, t_prev,t_prev_prev = x, grad_fx, t, t_prev_prev
         x = prox_g(x - t * grad_fx, t)
         end = time.perf_counter()
         residual = np.linalg.norm(x_prev - x) / t
         fx, grad_fx = oracle_f(x)
         current_info = {"res": residual, "obj": obj(fx, x), "grad": np.linalg.norm(grad_fx), "steps": t, "time":end-start, "mse":mse(x, xopt)}
-                
         history_dic = collect_history(history_dic, current_info)
         if current_info[stop] <= tol:
             if verbose:
@@ -249,7 +216,8 @@ def NPG(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init=True
     if current_info[stop] > tol:
         if verbose:
             print(f"The NPG{ver} algorithm terminated without reaching required accuracy")    
-    return x, history_dic
+    return x, history_dic 
+
 
 def NPG_quad(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init=True, verbose=False, track=["res", "obj", "grad", "steps","time"], fixed_step=1e-2, params = [0.1,5.7,0.99,0.98], xopt = 0):
     def obj(fx, x):
@@ -284,7 +252,6 @@ def NPG_quad(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init
         "time":[0],
         "mse":[mse(x, xopt)]
     }
-    history_dic = {key: [] for key in track}
     history_dic = {k: v for k, v in dict_values.items() if k in track}
 
     for i in range(1, maxit):
@@ -312,28 +279,17 @@ def NPG_quad(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init
     if current_info[stop] > tol:
         if verbose:
             print(f"The NPG-quad algorithm terminated without reaching required accuracy")    
-    return x, history_dic
+    return x, history_dic 
 
-def ProxGrad(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init=True, verbose=False, track=["res", "obj", "grad", "steps","time"], fixed_step=1e-2, params = [1.2,0.5], xopt = 0, LStype = 'armijo'):
-    """
-    LStype could only be either 'armijo' or 'explicit_LS1' or 'explicit_LS2'
-    """
+
+def ProxGrad(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init=True, verbose=False, track=["res", "obj", "grad", "steps","time"], fixed_step=1e-2, params = [1.2,0.5], xopt = 0):
     def obj(fx, x):
         return fx + g(x)
     
     start = time.perf_counter()
     inc, dcr = params[0],params[1]
     x_prev = x0
-    if LStype == 'explicit_LS1':
-        alg_name = 'PG-eLS1'
-        LS = explicit_linesearch1
-    elif LStype == 'explicit_LS2':
-        alg_name = 'PG-eLS2'
-        LS = explicit_linesearch2
-    else:
-        alg_name = 'PG-LS'
-        LS = linesearch        
-
+       
     if lns_init:
         t_prev, x, grad_prev, grad_fx, f_prev, fx, lns_iter = linesearch_initial(oracle_f, g, prox_g, x0, fixed_step, veryLargeSize=0.9)
         if verbose:
@@ -354,23 +310,26 @@ def ProxGrad(oracle_f, g, prox_g, x0, maxit=1000, tol=1e-9, stop="res", lns_init
         "time":[0],
         "mse":[mse(x, xopt)]
     }
-    history_dic = {key: [] for key in track}
     history_dic = {k: v for k, v in dict_values.items() if k in track}
     i = 0
     for _ in range(1, maxit):
         i += 1
-
-        x, fx, grad_fx, t = LS(oracle_f, g,  prox_g, x, fx, grad_fx, t_prev,  inc=inc, dcr=dcr)
+        x, fx, grad_fx, t = linesearch(oracle_f, g,  prox_g, x, fx, grad_fx, t_prev,  inc=inc, dcr=dcr)
         end = time.perf_counter()
         residual = np.linalg.norm(x_prev - x) / t
+        if t/t_prev < 10**-4 and residual > 1:
+            x = x_prev
+            if verbose: 
+                print(f"The PG-LS{params} algorithm terminated due to too small stepsize and unstable residual")
+            break
         x_prev, t_prev = x, t
         current_info = {"res": residual, "obj": obj(fx, x), "grad": np.linalg.norm(grad_fx), "steps": t,"time":end-start, "mse":mse(x, xopt)}
         history_dic = collect_history(history_dic, current_info)
         if current_info[stop] <= tol:
             if verbose:
-                print(f"The {alg_name}{params} algorithm reached required accuracy in {i+1} iterations.")
+                print(f"The PG-LS{params} algorithm reached required accuracy in {i+1} iterations. with residual {current_info['res']}")
             break
     if current_info[stop] > tol:
         if verbose:
-            print(f"The {alg_name}{params} algorithm terminated without reaching required accuracy")
+            print(f"The PG-LS{params} algorithm terminated without reaching required accuracy")
     return x, history_dic

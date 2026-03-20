@@ -9,13 +9,13 @@ from alg import AdProxGrad, ProxGrad, NPG, AdaPG
 ######################################################
 LOAD_DATA = False
 SAVE_DATA = False
-LOAD_RESULTS = False
+LOAD_RESULTS = True
 SAVE_RESULTS = True
 PLOT = False
 ######################################################
 
-seed = 4
-m, n = 500,2000
+seed = 1
+m, n = 4000,5000
 N = 200
 
 def run_dual_max_entropy(m = m, n = n, seed = seed, N = N):

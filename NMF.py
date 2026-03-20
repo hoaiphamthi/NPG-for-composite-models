@@ -14,29 +14,11 @@ SAVE_RESULTS = True
 PLOT = False
 ######################################################
 
-seed = 2
-m, r, n = 500, 20, 1000
+seed = 1
+m, r, n = 3000, 30, 3000
 N = 2000
 
 def run_nmf(m = m, r = r, n = n, seed = seed, N = N ):
-    def f(X):
-        U, V = X[:m], X[m:]
-        return 0.5 * np.linalg.norm(np.dot(U, V.T) - A)**2
-
-    def oracle_f(X):
-        U, V = X[:m], X[m:]
-        res = U @ V.T - A
-        grad_U = res @ V
-        grad_V = res.T @ U
-        return 0.5 * np.linalg.norm(res)**2, np.vstack([grad_U, grad_V])
-
-    def g(x):
-        return 0.0
-
-    def prox_g(x, alpha):
-        return np.vstack([np.maximum(x[:m], 0.0), np.maximum(x[m:], 0.0)])
-
-
     np.random.seed(seed)
     name = "nonnegative_matrix_factorization"
     name_instance = f"nmf_m={m}_n={n}_r={r}_seed={seed}"
@@ -56,6 +38,26 @@ def run_nmf(m = m, r = r, n = n, seed = seed, N = N ):
     if SAVE_DATA:
         data = {"A":A, "x0":x0}
         save(data, name_instance, name,saving_obj=1)
+
+    # ============================================================
+    # Define objective, gradient and proximal operator
+    # ============================================================
+    def f(X):
+        U, V = X[:m], X[m:]
+        return 0.5 * np.linalg.norm(np.dot(U, V.T) - A)**2
+
+    def oracle_f(X):
+        U, V = X[:m], X[m:]
+        res = U @ V.T - A
+        grad_U = res @ V
+        grad_V = res.T @ U
+        return 0.5 * np.linalg.norm(res)**2, np.vstack([grad_U, grad_V])
+
+    def g(x):
+        return 0.0
+
+    def prox_g(x, alpha):
+        return np.vstack([np.maximum(x[:m], 0.0), np.maximum(x[m:], 0.0)])
 
     def Run(algo, **kwargs):
         return algo(oracle_f, g, prox_g, x0, maxit = N, tol = tol, stop = "res", lns_init = True, verbose = False, 

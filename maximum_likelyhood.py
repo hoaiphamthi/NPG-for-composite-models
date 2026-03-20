@@ -3,18 +3,19 @@ from numpy.linalg import slogdet, inv
 from save_and_plot import  make_all_plots, load, save
 from alg import AdProxGrad, ProxGrad, NPG, AdaPG
 from scipy.linalg import eigh
+
 # Control section
 # - If data is not loaded then it will be created.
 # - If results is not loaded then the algorithms will run.
 ######################################################
 LOAD_DATA = False
 SAVE_DATA = False
-LOAD_RESULTS = False
+LOAD_RESULTS = True
 SAVE_RESULTS = True
 PLOT = False
 ######################################################
 
-seed = 6
+seed = 1
 n = 30
 lb = 1e-1
 ub = 1000
@@ -45,6 +46,9 @@ def run_maximum_likelyhood(n = n, lb = lb, ub = ub, M = M, seed = seed, N = N):
         data = {"Y":Y}
         save(data, name_instance, name,saving_obj=1)
 
+    # ============================================================
+    # Define objective, gradient and proximal operator
+    # ============================================================
     def f(X):
         return -slogdet(X)[1] + np.trace(X @ Y)
 

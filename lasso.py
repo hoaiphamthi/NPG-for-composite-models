@@ -2,17 +2,21 @@ import numpy as np
 from save_and_plot import save, load, make_all_plots
 from alg import AdProxGrad, ProxGrad, NPG, NPG_quad, AdaPG
 import matplotlib.pyplot as plt
+
+# Control section
+# - If data is not loaded then it will be created.
+# - If results is not loaded then the algorithms will run.
 ######################################################
 LOAD_DATA = False
 SAVE_DATA = False
-LOAD_RESULTS = False
+LOAD_RESULTS = True
 SAVE_RESULTS = True
 PLOT = False
 ######################################################
 
-seed = 2
-m = 2048
-n = 4*m
+seed = 1
+m = 1024
+n = 8*m
 
 def run_lasso(m = m, n = n, seed = seed):
     name = "lasso"
@@ -41,6 +45,9 @@ def run_lasso(m = m, n = n, seed = seed):
         data = {"A":A, "b":b, "x0":x0, "xopt": xopt}
         save(data, name_instance, name,saving_obj=1)
 
+    # ============================================================
+    # Define objective, gradient and proximal operator
+    # ============================================================
     def f(x):
         Ax_b = A.dot(x) - b
         return 0.5*(Ax_b.T.dot(Ax_b))
